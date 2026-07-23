@@ -275,8 +275,7 @@ public struct TelexComposer: Sendable {
         "ơ": ["ơ", "ớ", "ờ", "ở", "ỡ", "ợ"],
         "u": ["u", "ú", "ù", "ủ", "ũ", "ụ"],
         "ư": ["ư", "ứ", "ừ", "ử", "ữ", "ự"],
-        "y": ["y", "ý", "ỳ", "ỷ", "ỹ", "ỵ"],
-        "đ": ["đ", "đ", "đ", "đ", "đ", "đ"]
+        "y": ["y", "ý", "ỳ", "ỷ", "ỹ", "ỵ"]
     ]
 
     private static let reverseToneTable: [Character: (Character, Tone)] = {
@@ -289,4 +288,3 @@ public struct TelexComposer: Sendable {
         return result
     }()
 }
-

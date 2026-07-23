@@ -13,6 +13,7 @@ final class EventTapManager {
     private let engine = VietnameseEngine()
     private let injector = TextInjector()
     private let profileResolver = AppProfileResolver()
+    private let contextReader = TypingContextReader()
     private let lock = NSLock()
 
     private var eventTap: CFMachPort?
@@ -20,6 +21,7 @@ final class EventTapManager {
     private var vietnameseEnabled = true
     private var running = false
     private var diagnosticMessage = "EventTap chưa được khởi động."
+    private var debugTrace = "Chưa có phím nào được xử lý."
     private var receivedEventCount: UInt64 = 0
 
     private init() {}
@@ -239,21 +241,43 @@ final class EventTapManager {
             return Unmanaged.passUnretained(event)
         }
 
+        let isAutorepeat =
+            event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        if engine.rawBuffer.isEmpty,
+           VietnameseEngine.isToneKey(character),
+           !isAutorepeat,
+           let word = contextReader.restorableWordBeforeCaret() {
+            _ = engine.seed(renderedWord: word)
+        }
+
         let context = TypingContext(
             developerMode: settings.bool(forKey: "developerMode"),
             bundleIdentifier: profile.bundleIdentifier,
             aggressiveCodeDetection: profile.aggressiveCodeDetection
         )
-        let action = engine.process(character: character, context: context)
+        let action = engine.process(
+            character: character,
+            context: context,
+            isAutorepeat: isAutorepeat
+        )
 
         switch action {
         case .passthrough:
+            updateDebugTrace(injected: false)
+            publishState(activeAppName: profile.displayName)
             return Unmanaged.passUnretained(event)
+        case .suppress:
+            updateDebugTrace(injected: false)
+            publishState(activeAppName: profile.displayName)
+            return nil
         case let .replace(deleteCount, text):
             if injector.replace(deleteCount: deleteCount, with: text) {
+                updateDebugTrace(injected: true)
+                publishState(activeAppName: profile.displayName)
                 return nil
             }
             engine.reset()
+            updateDebugTrace(injected: false)
             updateRuntime(
                 running: true,
                 diagnostic: "EventTap nhận được phím nhưng không tạo được sự kiện chèn Unicode."
@@ -290,6 +314,34 @@ final class EventTapManager {
         }
     }
 
+    private func updateDebugTrace(injected: Bool) {
+        guard let trace = engine.lastTrace else { return }
+        let action: String
+        switch trace.action {
+        case .passthrough:
+            action = "passthrough"
+        case .suppress:
+            action = "suppress"
+        case let .replace(deleteCount, text):
+            action = "replace(\(deleteCount), \"\(text)\")"
+        }
+
+        let value = """
+        Key              : \(trace.key)
+        Buffer source    : \(trace.bufferSource.rawValue)
+        Raw before       : \(trace.rawBefore)
+        Raw after        : \(trace.rawAfter)
+        Rendered before  : \(trace.renderedBefore)
+        Rendered after   : \(trace.renderedAfter)
+        Tone             : \(trace.tone)
+        Tone target      : \(trace.toneTarget)
+        Action           : \(action)
+        Autorepeat       : \(trace.isAutorepeat)
+        Injected         : \(injected)
+        """
+        lock.locked { debugTrace = value }
+    }
+
     private func publishState(activeAppName: String? = nil) {
         let snapshot = lock.locked {
             RuntimeSnapshot(
@@ -298,7 +350,8 @@ final class EventTapManager {
                 permissionGranted: AccessibilityPermission.isGranted,
                 activeAppName: activeAppName ?? NSWorkspace.shared.frontmostApplication?.localizedName ?? "—",
                 diagnosticMessage: diagnosticMessage,
-                receivedEventCount: receivedEventCount
+                receivedEventCount: receivedEventCount,
+                debugTrace: debugTrace
             )
         }
         DispatchQueue.main.async {

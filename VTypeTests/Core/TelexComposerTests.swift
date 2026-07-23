@@ -30,4 +30,9 @@ final class TelexComposerTests: XCTestCase {
     func testRemoveMarksWithZ() {
         XCTAssertEqual(composer.compose("tieengsz"), "tieng")
     }
+
+    func testDotToneTargetsMarkedVowel() {
+        XCTAssertEqual(composer.compose("ddoongj"), "động")
+        XCTAssertEqual(composer.compose("đôngj"), "động")
+    }
 }

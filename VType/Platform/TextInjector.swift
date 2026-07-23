@@ -1,12 +1,16 @@
 import CoreGraphics
+import Foundation
 
 final class TextInjector {
     static let syntheticMarker: Int64 = 0x5654595045
 
     private let source = CGEventSource(stateID: .hidSystemState)
+    private let transactionLock = NSLock()
 
     @discardableResult
     func replace(deleteCount: Int, with text: String) -> Bool {
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
         guard let source else { return false }
 
         // Build everything before posting. If event creation fails, the physical

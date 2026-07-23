@@ -22,6 +22,17 @@ struct VTypeApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            let currentProcessIdentifier = ProcessInfo.processInfo.processIdentifier
+            let hasAnotherInstance = NSRunningApplication
+                .runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+                .contains { $0.processIdentifier != currentProcessIdentifier }
+            guard !hasAnotherInstance else {
+                NSApp.terminate(nil)
+                return
+            }
+        }
+
         EventTapManager.shared.start()
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,

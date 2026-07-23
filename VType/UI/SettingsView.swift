@@ -32,7 +32,7 @@ struct SettingsView: View {
 
                     Text(state.diagnosticMessage)
                         .font(.caption)
-                        .foregroundStyle(state.isRunning ? .secondary : .orange)
+                        .foregroundStyle(state.isRunning ? Color.secondary : Color.orange)
                 }
 
                 Section("Cách gõ") {
@@ -56,6 +56,17 @@ struct SettingsView: View {
                 Label("Chung", systemImage: "switch.2")
             }
 
+            ScrollView {
+                Text(state.debugTrace)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+            }
+            .tabItem {
+                Label("Debug", systemImage: "ladybug")
+            }
+
             VStack(alignment: .leading, spacing: 12) {
                 Text("VType 0.1.1")
                     .font(.title2.bold())
@@ -71,4 +82,9 @@ struct SettingsView: View {
         }
         .frame(width: 520, height: 380)
     }
+}
+
+#Preview {
+    // The view to preview.
+    SettingsView()
 }

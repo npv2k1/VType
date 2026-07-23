@@ -17,6 +17,7 @@ final class RuntimeState: ObservableObject {
     @Published private(set) var activeAppName = "—"
     @Published private(set) var diagnosticMessage = "Đang khởi tạo…"
     @Published private(set) var receivedEventCount: UInt64 = 0
+    @Published private(set) var debugTrace = "Chưa có phím nào được xử lý."
 
     private enum Keys {
         static let developerMode = "developerMode"
@@ -43,6 +44,7 @@ final class RuntimeState: ObservableObject {
             self.activeAppName = snapshot.activeAppName
             self.diagnosticMessage = snapshot.diagnosticMessage
             self.receivedEventCount = snapshot.receivedEventCount
+            self.debugTrace = snapshot.debugTrace
         }
     }
 }
@@ -54,4 +56,5 @@ struct RuntimeSnapshot {
     var activeAppName: String
     var diagnosticMessage: String
     var receivedEventCount: UInt64
+    var debugTrace: String
 }
