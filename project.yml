@@ -1,0 +1,60 @@
+name: VType
+options:
+  bundleIdPrefix: dev.vtype
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "16.0"
+  groupSortPosition: top
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.1
+targets:
+  VType:
+    type: application
+    platform: macOS
+    sources:
+      - path: VType
+    info:
+      path: VType/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: VType
+        CFBundleName: VType
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: "Copyright © 2026 VType contributors"
+        NSInputMonitoringUsageDescription: "VType cần đọc phím để chuyển Telex thành tiếng Việt ngay trên máy."
+    entitlements:
+      path: VType/Resources/VType.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.vtype.app
+        PRODUCT_NAME: VType
+        INFOPLIST_KEY_LSUIElement: YES
+  VTypeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: VTypeTests
+    dependencies:
+      - target: VType
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.vtype.tests
+schemes:
+  VType:
+    build:
+      targets:
+        VType: all
+        VTypeTests: [test]
+    test:
+      targets:
+        - VTypeTests
