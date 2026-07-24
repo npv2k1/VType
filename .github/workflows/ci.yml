@@ -1,24 +1,51 @@
-name: macOS CI
+name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  test-and-build:
     runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_16.4.app
+
       - name: Install XcodeGen
         run: brew install xcodegen
+
       - name: Generate project
         run: xcodegen generate
+
       - name: Test core package
         run: swift test
-      - name: Build app
+
+      - name: Test Xcode project
+        run: |
+          xcodebuild test \
+            -project VType.xcodeproj \
+            -scheme VType \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/VTypeDerivedData" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build unsigned Release app
         run: |
           xcodebuild build \
             -project VType.xcodeproj \
             -scheme VType \
-            -configuration Debug \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/VTypeDerivedData" \
             CODE_SIGNING_ALLOWED=NO

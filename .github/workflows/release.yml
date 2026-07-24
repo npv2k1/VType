@@ -1,0 +1,110 @@
+name: Unsigned Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vX.Y.Z tag to release
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_16.4.app
+
+      - name: Validate tag and project version
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          version="${RELEASE_TAG#v}"
+          project_version="$(sed -nE 's/^[[:space:]]*MARKETING_VERSION:[[:space:]]*"?([^"]+)"?$/\1/p' project.yml)"
+          test "$version" = "$project_version"
+          git rev-parse --verify "refs/tags/$RELEASE_TAG"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project and test core
+        run: |
+          xcodegen generate
+          swift test
+          xcodebuild test \
+            -project VType.xcodeproj \
+            -scheme VType \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/VTypeTestDerivedData" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build unsigned Release app
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project VType.xcodeproj \
+            -scheme VType \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/VTypeReleaseDerivedData" \
+            -destination 'generic/platform=macOS' \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Verify and package unsigned artifact
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/VTypeReleaseDerivedData/Build/Products/Release/VType.app"
+          output_dir="$RUNNER_TEMP/release"
+          artifact_name="VType-${RELEASE_TAG#v}-macOS-unsigned.zip"
+          artifact="$output_dir/$artifact_name"
+          mkdir -p "$output_dir"
+          test -d "$app"
+          if codesign --verify "$app" 2>/dev/null; then
+            echo "::error::Expected an unsigned app, but a signature was found"
+            exit 1
+          fi
+          lipo "$app/Contents/MacOS/VType" -verify_arch x86_64 arm64
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$artifact"
+          (
+            cd "$output_dir"
+            shasum -a 256 "$artifact_name" > "$artifact_name.sha256"
+          )
+          {
+            echo "VType unsigned preview"
+            echo "Tag: $RELEASE_TAG"
+            echo "Commit: $GITHUB_SHA"
+            echo "Build: $GITHUB_RUN_NUMBER"
+            echo "Bundle ID: dev.vtype.app"
+            echo "Signing: none"
+            echo "Notarization: none"
+          } > "$output_dir/VType-${RELEASE_TAG#v}-build-info.txt"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "$RUNNER_TEMP/release/"* \
+            --verify-tag \
+            --generate-notes \
+            --prerelease \
+            --title "VType ${RELEASE_TAG#v} (unsigned preview)" \
+            --notes "⚠️ This binary is unsigned and not notarized by Apple. Verify the SHA-256 file and follow the unsigned installation instructions in the README."

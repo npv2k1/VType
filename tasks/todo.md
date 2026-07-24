@@ -55,3 +55,28 @@
   Designated Requirement.
 - The requirement now uses bundle ID `dev.vtype.app`, Apple Development
   certificate identity, and Team ID instead of a changing ad-hoc `cdhash`.
+
+# GitHub CI, unsigned release, and open-source readiness
+
+- [x] Audit the existing CI, build, signing, license, and repository metadata.
+- [x] Make pull-request CI run package tests, Xcode tests, and an unsigned
+  Release build.
+- [x] Add a secret-free tag-driven unsigned preview workflow.
+- [x] Add Dependabot, issue forms, and a pull request template.
+- [x] Document contributions, security reporting, privacy, releases, and
+  changes.
+- [x] Validate workflow syntax and run the full local CI command.
+
+## Review
+
+- All GitHub YAML files parse successfully and `git diff --check` passes.
+- `make ci` passed 11 Swift Package tests, 11 Xcode tests, and an unsigned
+  universal Release build for Apple Silicon and Intel.
+- An unsigned archive simulation succeeded with build number override applied.
+- The release workflow validates semantic tags against `MARKETING_VERSION`,
+  verifies that the app is unsigned and universal, then publishes a clearly
+  labeled prerelease ZIP, SHA-256 file, and build metadata.
+- No Apple certificate, notarization credential, or GitHub secret is required.
+- Local packaging simulation confirmed no signature, both `x86_64` and `arm64`,
+  a downloadable checksum that verifies successfully, bundle ID
+  `dev.vtype.app`, and CI build-number override.

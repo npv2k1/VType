@@ -1,8 +1,15 @@
 # VType
 
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 VType là bộ gõ tiếng Việt native cho macOS, tập trung vào developer thường xuyên
 gõ lẫn tiếng Việt, tiếng Anh và code. MVP dùng `CGEventTap` để chèn Unicode trực
 tiếp nên không tạo marked text/gạch chân như Input Method mặc định.
+
+> Trạng thái: **preview**. Core Telex đã có regression test, nhưng compatibility
+> với từng editor vẫn đang được hoàn thiện. Hãy đọc phần giới hạn trước khi dùng
+> cho công việc quan trọng.
 
 ## MVP hiện có
 
@@ -21,6 +28,29 @@ tiếp nên không tạo marked text/gạch chân như Input Method mặc địn
 - macOS 13 trở lên.
 - Xcode 15 trở lên.
 - Homebrew chỉ cần để cài XcodeGen.
+
+## Cài bản phát hành
+
+Tải file `VType-x.y.z-macOS-unsigned.zip` từ
+[GitHub Releases](../../releases), giải nén và
+kéo `VType.app` vào `/Applications`.
+
+> Các bản phát hành hiện là **unsigned preview**: chưa được ký Developer ID và
+> chưa được Apple notarize. macOS sẽ cảnh báo ứng dụng không xác định. Chỉ tải từ
+> trang Releases của repository này và kiểm tra file `.sha256` trước khi mở.
+
+```bash
+shasum -a 256 -c VType-x.y.z-macOS-unsigned.zip.sha256
+```
+
+Sau khi kéo app vào `/Applications`, Control-click `VType.app`, chọn **Open** và
+xác nhận. Nếu macOS vẫn chặn, thử mở app một lần rồi vào **System Settings →
+Privacy & Security → Open Anyway**. Không tắt Gatekeeper toàn hệ thống.
+
+Lần đầu chạy thành công, macOS sẽ yêu cầu quyền Accessibility vì VType cần quan
+sát và thay thế sự kiện bàn phím. VType không cần kết nối mạng, không gửi
+telemetry và không lưu nội dung đã gõ. Xem chi tiết tại
+[PRIVACY.md](PRIVACY.md).
 
 ## Chạy project
 
@@ -66,6 +96,7 @@ Có thể build/test bằng terminal:
 ```bash
 make test
 make build
+make ci
 ```
 
 Engine cũng là một Swift Package độc lập:
@@ -127,3 +158,10 @@ VType được viết mới, không sao chép engine. Thiết kế tham khảo:
 
 Chi tiết giấy phép và phạm vi tham khảo nằm trong
 [`docs/OPEN_SOURCE_NOTICES.md`](docs/OPEN_SOURCE_NOTICES.md).
+
+## Đóng góp và bảo mật
+
+VType phát hành theo giấy phép [MIT](LICENSE). Trước khi gửi thay đổi, đọc
+[CONTRIBUTING.md](CONTRIBUTING.md) và
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Vấn đề bảo mật hoặc quyền riêng tư
+không nên được đăng công khai; làm theo [SECURITY.md](SECURITY.md).
