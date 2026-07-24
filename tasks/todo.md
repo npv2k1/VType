@@ -79,4 +79,49 @@
 - No Apple certificate, notarization credential, or GitHub secret is required.
 - Local packaging simulation confirmed no signature, both `x86_64` and `arm64`,
   a downloadable checksum that verifies successfully, bundle ID
-  `dev.vtype.app`, and CI build-number override.
+  `com.npv2k1.vtype`, and CI build-number override.
+
+# Production icon and isolated Dev/Prod apps
+
+- [x] Generate a production VType icon and create every macOS AppIcon slot.
+- [x] Keep Debug as `VType Dev` / `dev.vtype.app`.
+- [x] Set Release to `VType` / `com.npv2k1.vtype`.
+- [x] Add cross-variant EventTap ownership so both processes can coexist.
+- [x] Add explicit local build/run commands for Dev and Prod.
+- [x] Verify tests, both signed builds, bundle metadata, icon resources, and
+  simultaneous launch behavior.
+
+## Review
+
+- The imagegen master is stored at `docs/assets/AppIcon-master.png`; all ten
+  standard macOS icon slots are present and compile to `AppIcon.icns`.
+- Debug builds display as `VType Dev` with `dev.vtype.app`; Release builds
+  display as `VType` with `com.npv2k1.vtype`.
+- Swift Package and Xcode tests pass (11 tests each), and both configurations
+  build with valid Apple Development signatures.
+- Dev and Prod were launched simultaneously. The latest activated variant owns
+  the EventTap while the other remains running without injecting duplicate
+  events.
+- The previous `/Applications/VType.app` Dev build was moved to Trash as
+  `VType-dev-backup-2026-07-25.app`. The new Prod build is installed at
+  `/Applications/VType.app` and satisfies its designated requirement.
+
+# Accessibility for public release
+
+- [x] Confirm that `v0.1.1` was packaged without any code signature.
+- [x] Change public artifacts to ad-hoc signing without Apple credentials.
+- [x] Give the production app a bundle-ID-based designated requirement.
+- [x] Rename artifacts and warnings from unsigned to ad-hoc preview.
+- [x] Bump the patch version to `0.1.2` and document migration from `v0.1.1`.
+- [x] Build, sign, package, and verify the `0.1.2` release candidate locally.
+
+## Review
+
+- The local `0.1.2` candidate is ad-hoc signed with the stable designated
+  requirement `identifier "com.npv2k1.vtype"`.
+- `codesign --verify --deep --strict` passes for both the packaged candidate and
+  the copy installed at `/Applications/VType.app`.
+- The old `0.1.1` installation was moved to Trash as
+  `VType-prod-development-signed-backup-2026-07-25.app`.
+- Accessibility approval was reset only for `com.npv2k1.vtype`; the user must
+  grant it once to the newly installed production app.

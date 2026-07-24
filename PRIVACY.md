@@ -21,6 +21,10 @@ VType xử lý sự kiện bàn phím cục bộ để chuyển Telex thành Uni
 Dữ liệu composition và debug trace chỉ tồn tại trong memory của process và bị
 thay thế/reset trong quá trình sử dụng hoặc khi app thoát.
 
+Nếu cả `VType` và `VType Dev` đang chạy, hai process chỉ trao đổi bundle
+identifier qua macOS distributed notification để chọn một EventTap đang hoạt
+động. Nội dung bàn phím và composition không được gửi giữa hai process.
+
 ## Quyền macOS
 
 VType cần Accessibility để bắt và thay thế event bàn phím trên toàn hệ thống.

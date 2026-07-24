@@ -21,6 +21,10 @@ struct VTypeApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private static let inputOwnerDidChange = Notification.Name(
+        "com.npv2k1.vtype.inputOwnerDidChange"
+    )
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
             let currentProcessIdentifier = ProcessInfo.processInfo.processIdentifier
@@ -33,7 +37,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        EventTapManager.shared.start()
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(otherVariantClaimedInput(_:)),
+            name: Self.inputOwnerDidChange,
+            object: nil
+        )
+        claimInputOwnership()
+
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
@@ -49,11 +60,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // TCC may update AXIsProcessTrusted a moment after returning from
         // System Settings. Retrying here avoids requiring an app restart.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            EventTapManager.shared.start()
+            self.claimInputOwnership()
         }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        DistributedNotificationCenter.default().removeObserver(self)
         EventTapManager.shared.stop()
+    }
+
+    private func claimInputOwnership() {
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else {
+            return
+        }
+
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? ""
+        DistributedNotificationCenter.default().post(
+            name: Self.inputOwnerDidChange,
+            object: bundleIdentifier
+        )
+        EventTapManager.shared.start()
+    }
+
+    @objc
+    private func otherVariantClaimedInput(_ notification: Notification) {
+        guard
+            let ownerBundleIdentifier = notification.object as? String,
+            ownerBundleIdentifier != Bundle.main.bundleIdentifier
+        else {
+            return
+        }
+
+        EventTapManager.shared.stop()
+        EventTapManager.shared.resetComposition()
     }
 }

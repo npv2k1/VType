@@ -68,7 +68,9 @@ struct SettingsView: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("VType 0.1.1")
+                Text(
+                    "VType \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")"
+                )
                     .font(.title2.bold())
                 Text("Bộ gõ Telex native cho macOS, tối ưu cho developer.")
                 Text("Toàn bộ xử lý chạy local. VType không dùng mạng, không telemetry và không lưu nội dung đã gõ.")
@@ -82,9 +84,4 @@ struct SettingsView: View {
         }
         .frame(width: 520, height: 380)
     }
-}
-
-#Preview {
-    // The view to preview.
-    SettingsView()
 }

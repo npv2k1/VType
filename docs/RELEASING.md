@@ -1,18 +1,23 @@
 # Release process
 
 VType releases are built by GitHub Actions from immutable `vX.Y.Z` tags. The
-current workflow intentionally produces an **unsigned, non-notarized preview**
-because the project does not have an Apple Developer Program membership.
+current workflow produces an **ad-hoc signed, non-notarized preview** because the
+project does not have an Apple Developer Program membership. The ad-hoc
+signature supplies a stable designated requirement for macOS Accessibility; it
+does not verify the publisher.
 
 The workflow runs package and Xcode tests, builds a universal macOS app, verifies
-that it has no code signature, then publishes:
+its ad-hoc signature and designated requirement, then publishes:
 
-- `VType-X.Y.Z-macOS-unsigned.zip`;
+- `VType-X.Y.Z-macOS-adhoc.zip`;
 - a matching SHA-256 file;
 - build metadata containing the tag, commit, build number, bundle ID and signing
   status.
 
-No Apple certificate or GitHub secret is required.
+No Apple certificate or GitHub secret is required. The release remains a
+prerelease until Developer ID signing and notarization are available.
+Release builds use the production bundle identifier `com.npv2k1.vtype`; Debug
+builds retain the separate local identifier `dev.vtype.app`.
 
 ## One-time repository configuration
 
@@ -36,20 +41,20 @@ git push origin v0.2.0
 
 The workflow rejects a tag whose version differs from `MARKETING_VERSION`.
 Rerunning `workflow_dispatch` requires an existing tag and does not create or
-move tags. GitHub Releases are marked as prerelease while artifacts remain
-unsigned.
+move tags.
 
 ## User-facing warning
 
-Do not describe these artifacts as trusted, signed, notarized or Gatekeeper
-approved. Users should verify SHA-256, use Control-click → Open or macOS
-**Open Anyway**, and must not be instructed to disable Gatekeeper globally.
+Describe these artifacts specifically as **ad-hoc signed**, never as Developer
+ID signed, trusted, notarized or Gatekeeper approved. Users should verify
+SHA-256, use Control-click → Open or macOS **Open Anyway**, and must not be
+instructed to disable Gatekeeper globally.
 
 ## Future signed releases
 
 If the project later joins the Apple Developer Program, add Developer ID signing
-and Apple notarization as a separate reviewed change. Keep the unsigned filename
-and prerelease label until a signed artifact has successfully passed
+and Apple notarization as a separate reviewed change. Keep the `adhoc` filename
+and prerelease label until a Developer ID artifact has successfully passed
 `codesign`, `notarytool`, and `stapler` verification.
 
 Never move or overwrite a published tag. If a release is broken, document it,

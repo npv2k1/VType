@@ -23,8 +23,10 @@ Apple app-specific password hoặc signing secret.
 
 ## Release integrity
 
-Artifact hiện tại là unsigned preview và không được Apple notarize. Artifact chỉ
-được phát hành qua GitHub Releases, kèm tag, commit, build metadata và file
-SHA-256. Người dùng cần kiểm tra checksum; không tin cậy binary được chia sẻ qua
-kênh khác. Khi dự án có Developer ID, chính sách này phải được cập nhật cùng
-release workflow trước khi gọi artifact là signed hoặc notarized.
+Artifact hiện tại dùng ad-hoc signature để cung cấp identity cho macOS
+Accessibility, nhưng chữ ký này không xác minh tác giả và artifact không được
+Apple notarize. Artifact chỉ được phát hành qua GitHub Releases, kèm tag, commit,
+build metadata và file SHA-256. Người dùng cần kiểm tra checksum; không tin cậy
+binary được chia sẻ qua kênh khác. Khi dự án có Developer ID, chính sách này phải
+được cập nhật cùng release workflow trước khi gọi artifact là Developer ID
+signed hoặc notarized.

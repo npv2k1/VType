@@ -1,4 +1,4 @@
-name: Unsigned Release
+name: Ad-hoc Release
 
 on:
   push:
@@ -56,7 +56,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/VTypeTestDerivedData" \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Build unsigned Release app
+      - name: Build Release app
         run: |
           set -euo pipefail
           xcodebuild build \
@@ -68,32 +68,39 @@ jobs:
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Verify and package unsigned artifact
+      - name: Ad-hoc sign, verify and package artifact
         run: |
           set -euo pipefail
           app="$RUNNER_TEMP/VTypeReleaseDerivedData/Build/Products/Release/VType.app"
           output_dir="$RUNNER_TEMP/release"
-          artifact_name="VType-${RELEASE_TAG#v}-macOS-unsigned.zip"
+          artifact_name="VType-${RELEASE_TAG#v}-macOS-adhoc.zip"
           artifact="$output_dir/$artifact_name"
           mkdir -p "$output_dir"
           test -d "$app"
-          if codesign --verify "$app" 2>/dev/null; then
-            echo "::error::Expected an unsigned app, but a signature was found"
-            exit 1
-          fi
           lipo "$app/Contents/MacOS/VType" -verify_arch x86_64 arm64
+          codesign \
+            --force \
+            --sign - \
+            --identifier com.npv2k1.vtype \
+            --requirements '=designated => identifier "com.npv2k1.vtype"' \
+            --options runtime \
+            --entitlements VType/Resources/VType.entitlements \
+            "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign -d -r- "$app" 2>&1 | grep \
+            'designated => identifier "com.npv2k1.vtype"'
           ditto -c -k --sequesterRsrc --keepParent "$app" "$artifact"
           (
             cd "$output_dir"
             shasum -a 256 "$artifact_name" > "$artifact_name.sha256"
           )
           {
-            echo "VType unsigned preview"
+            echo "VType ad-hoc signed preview"
             echo "Tag: $RELEASE_TAG"
             echo "Commit: $GITHUB_SHA"
             echo "Build: $GITHUB_RUN_NUMBER"
-            echo "Bundle ID: dev.vtype.app"
-            echo "Signing: none"
+            echo "Bundle ID: com.npv2k1.vtype"
+            echo "Signing: ad-hoc (no Developer ID)"
             echo "Notarization: none"
           } > "$output_dir/VType-${RELEASE_TAG#v}-build-info.txt"
 
@@ -106,5 +113,5 @@ jobs:
             --verify-tag \
             --generate-notes \
             --prerelease \
-            --title "VType ${RELEASE_TAG#v} (unsigned preview)" \
-            --notes "⚠️ This binary is unsigned and not notarized by Apple. Verify the SHA-256 file and follow the unsigned installation instructions in the README."
+            --title "VType ${RELEASE_TAG#v} (ad-hoc preview)" \
+            --notes "⚠️ This binary uses an ad-hoc signature for macOS Accessibility identity. It has no Developer ID and is not notarized by Apple. Verify SHA-256 and follow the installation instructions in the README."

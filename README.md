@@ -1,5 +1,7 @@
 # VType
 
+<img src="docs/assets/AppIcon-master.png" alt="VType app icon" width="128">
+
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -31,16 +33,17 @@ tiếp nên không tạo marked text/gạch chân như Input Method mặc địn
 
 ## Cài bản phát hành
 
-Tải file `VType-x.y.z-macOS-unsigned.zip` từ
+Tải file `VType-x.y.z-macOS-adhoc.zip` từ
 [GitHub Releases](../../releases), giải nén và
 kéo `VType.app` vào `/Applications`.
 
-> Các bản phát hành hiện là **unsigned preview**: chưa được ký Developer ID và
-> chưa được Apple notarize. macOS sẽ cảnh báo ứng dụng không xác định. Chỉ tải từ
-> trang Releases của repository này và kiểm tra file `.sha256` trước khi mở.
+> Các bản phát hành hiện dùng **ad-hoc signature** để macOS Accessibility nhận
+> diện đúng app, nhưng chưa được ký Developer ID và chưa được Apple notarize.
+> macOS vẫn cảnh báo ứng dụng không xác định. Chỉ tải từ trang Releases của
+> repository này và kiểm tra file `.sha256` trước khi mở.
 
 ```bash
-shasum -a 256 -c VType-x.y.z-macOS-unsigned.zip.sha256
+shasum -a 256 -c VType-x.y.z-macOS-adhoc.zip.sha256
 ```
 
 Sau khi kéo app vào `/Applications`, Control-click `VType.app`, chọn **Open** và
@@ -51,6 +54,15 @@ Lần đầu chạy thành công, macOS sẽ yêu cầu quyền Accessibility v�
 sát và thay thế sự kiện bàn phím. VType không cần kết nối mạng, không gửi
 telemetry và không lưu nội dung đã gõ. Xem chi tiết tại
 [PRIVACY.md](PRIVACY.md).
+
+Nếu đã từng cài bản `v0.1.1` unsigned nhưng quyền không có hiệu lực:
+
+1. Thoát và xóa bản `v0.1.1`.
+2. Trong **Accessibility**, xóa mục VType cũ bằng nút `−`.
+3. Chép bản ad-hoc mới vào `/Applications` trước khi mở.
+4. Mở bằng Control-click → **Open**, sau đó thêm/bật đúng
+   `/Applications/VType.app` trong Accessibility.
+5. Thoát và mở lại VType một lần sau khi cấp quyền.
 
 ## Chạy project
 
@@ -95,9 +107,22 @@ Có thể build/test bằng terminal:
 
 ```bash
 make test
-make build
+make build-dev
+make build-prod
 make ci
 ```
+
+Hai configuration có identity và dữ liệu riêng:
+
+| Configuration | App | Bundle ID |
+| --- | --- | --- |
+| Debug | `VType Dev` | `dev.vtype.app` |
+| Release | `VType.app` | `com.npv2k1.vtype` |
+
+Chạy từng bản bằng `make run-dev` hoặc `make run-prod`. Cả hai có thể cùng tồn
+tại và giữ quyền Accessibility/UserDefaults riêng. Để tránh hai EventTap cùng
+inject một phím, bản được activate gần nhất sẽ giữ quyền xử lý; bản còn lại tự
+dừng EventTap. Mở menu của bản muốn dùng để chuyển input ownership.
 
 Engine cũng là một Swift Package độc lập:
 

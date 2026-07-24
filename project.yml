@@ -13,7 +13,7 @@ settings:
     DEVELOPMENT_TEAM: 7SLZ53Q7HK
     ENABLE_HARDENED_RUNTIME: YES
     CURRENT_PROJECT_VERSION: 1
-    MARKETING_VERSION: 0.1.1
+    MARKETING_VERSION: 0.1.2
 targets:
   VType:
     type: application
@@ -23,8 +23,8 @@ targets:
     info:
       path: VType/Resources/Info.plist
       properties:
-        CFBundleDisplayName: VType
-        CFBundleName: VType
+        CFBundleDisplayName: "$(VTYPE_DISPLAY_NAME)"
+        CFBundleName: "$(VTYPE_DISPLAY_NAME)"
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.utilities
@@ -37,9 +37,16 @@ targets:
         com.apple.security.app-sandbox: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.vtype.app
-        PRODUCT_NAME: VType
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSUIElement: YES
+        PRODUCT_NAME: VType
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: dev.vtype.app
+          VTYPE_DISPLAY_NAME: VType Dev
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.npv2k1.vtype
+          VTYPE_DISPLAY_NAME: VType
   VTypeTests:
     type: bundle.unit-test
     platform: macOS
